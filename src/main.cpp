@@ -22,6 +22,7 @@ const int SCR_HEIGHT =  9 * 90;
 
 float cubePosX = 0;
 float cubePosZ = 0;
+float cubeOrientation = 0;
 
 Camera camera(glm::vec3(0.0f, 0.0f, 3.0f)); // Initialization of the camera with a pos
 
@@ -51,11 +52,17 @@ void cursorCallBack(GLFWwindow *window, double xPos, double yPos){
         firstMouse = false;
     }
 
-    float xOffset = xPos - lastX;
     float yOffset = lastY - yPos;
+    float xOffset = 0; 
+
+    // TODO: Implement a way to unlock the xOffset by pressing the right click
+    if (glfwGetKey(window, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS) xOffset = xPos - lastX;
+    cubeOrientation = -xPos;
+   
     lastX = xPos;
     lastY = yPos;
-    
+   
+
     camera.ProcessMouseMovement(xOffset, yOffset);
 };
 
@@ -335,10 +342,12 @@ int main(){
         unsigned int projLoc     = glGetUniformLocation(materialShader.getShaderID(), "projection");
         glUniformMatrix4fv(viewLoc , 1, GL_FALSE, glm::value_ptr(globalView));
         glUniformMatrix4fv(projLoc , 1, GL_FALSE, glm::value_ptr(globalProjection));
-      
+     
+        // TODO: Implement a way to unlock the xOffset by pressing the right click
         glBindVertexArray(VAO[0]);
-        cubeModel = glm::mat4(1.0f);
+        //cubeModel = glm::mat4(1.0f);
         cubeModel = glm::translate(cubeModel, glm::vec3(cubePosX, -2.0f, cubePosZ));
+        cubeModel = glm::rotate(cubeModel, glm::radians(cubeOrientation), glm::vec3(0.0f, 1.0f, 0.0f));
         cubeModel = glm::scale(cubeModel, glm::vec3(0.7f, 0.7f, 0.7f));
         //float angle = 20.0f * 1;
         //cubeModel = glm::rotate(cubeModel, glm::radians(angle + currentFrame * 15), glm::vec3(1.0f, 0.3f, 0.5f));
