@@ -22,7 +22,13 @@ const int SCR_HEIGHT =  9 * 90;
 
 float cubePosX = 0;
 float cubePosZ = 0;
+glm::vec3 cubePos = glm::vec3(0.0f, -2.3f, 0.0f);
 float cubeOrientation = 0;
+
+float xCursorOffset = 0;
+float yCursorOffset = 0;
+double xCursorPos = 0;
+double yCursorPos = 0;
 
 Camera camera(glm::vec3(0.0f, 0.0f, 3.0f)); // Initialization of the camera with a pos
 
@@ -46,25 +52,36 @@ void processInput(GLFWwindow *window){
 }
 
 void cursorCallBack(GLFWwindow *window, double xPos, double yPos){
+    xCursorPos = xPos;
+    yCursorPos = yPos;
+
     if (firstMouse){
         lastX = xPos;
         lastY = yPos;
         firstMouse = false;
     }
 
-    float yOffset = lastY - yPos;
-    float xOffset = 0; 
+    yCursorOffset = lastY - yPos;
+    xCursorOffset = xPos - lastX; 
 
     // TODO: Implement a way to unlock the xOffset by pressing the right click
-    if (glfwGetKey(window, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS) xOffset = xPos - lastX;
-    cubeOrientation = -xPos;
    
     lastX = xPos;
     lastY = yPos;
-   
 
-    camera.ProcessMouseMovement(xOffset, yOffset);
+    camera.ProcessMouseMovement(xCursorOffset, yCursorOffset);
 };
+
+// TODO REDO THIS INTO A CURSOR CALLBACK
+void mouseButtonCallback(GLFWwindow *window, int button, int action, int mods){
+    
+    if (button == GLFW_MOUSE_BUTTON_RIGHT && action == GLFW_PRESS){
+    //if (glfwGetKey(window, GLFW_MOUSE_BUTTON_1) == GLFW_PRESS){
+        xCursorOffset = xCursorPos - lastX;
+        cubeOrientation = -xCursorPos;
+        printf("RIGHT CLICK!\n");
+    } 
+}
 
 void scrollCallback(GLFWwindow *window, double xOffset, double yOffset){
     camera.ProcessMouseScroll(yOffset);
@@ -105,10 +122,10 @@ void processCameraInputController(){
 }
 
 void processPlayerInput(GLFWwindow *window){
-    if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) { cubePosZ -= 0.2; }
-    if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) { cubePosZ += 0.2; }
-    if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) { cubePosX -= 0.2; }
-    if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) { cubePosX += 0.2; }
+    if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) { cubePos.z -= 0.2; }
+    if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) { cubePos.z += 0.2; }
+    if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) { cubePos.x -= 0.2; }
+    if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) { cubePos.x += 0.2; }
 }
 
 void processColorScreen(GLFWwindow *window){
@@ -154,8 +171,10 @@ int main(){
         printf("NUMBER OF AXES AVAILABLE: %d\n", axesCount);
     }
 
+    glfwSetInputMode(window, GLFW_STICKY_MOUSE_BUTTONS, GLFW_TRUE);
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-    glfwSetCursorPosCallback(window, cursorCallBack);
+    //glfwSetMouseButtonCallback(window, mouseButtonCallback);
+    //glfwSetCursorPosCallback(window, cursorCallBack);
     glfwSetScrollCallback(window, scrollCallback);
     loadControllerGamePad();
 
@@ -288,6 +307,32 @@ int main(){
         if (CONTROLLER_CONNECTED) processCameraInputController();
         if (CONTROLLER_CONNECTED) camera.triggerAimViewFov(controllerAxes);
 
+        // TODO I NEED TO IMPLEMENT THIS USING THE CURSOR CALLBACK
+        if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS){
+            //double xPos = 0;
+            //double yPos = 0;
+            glfwGetCursorPos(window, &xCursorPos, &yCursorPos);
+
+            //xCursorPos = xPos;
+            //yCursorPos = yPos;
+
+            if (firstMouse){
+                lastX = xCursorPos;
+                lastY = yCursorPos;
+                firstMouse = false;
+            }
+
+            xCursorOffset = xCursorPos - lastX;
+            yCursorOffset = lastY - yCursorPos;
+            cubeOrientation = -xCursorPos;
+
+            lastX = xCursorPos;
+            lastY = yCursorPos;
+
+            camera.ProcessMouseMovement(xCursorOffset, yCursorOffset);
+            //printf("RIGHT CLICK!\n");
+        }
+
         glClearColor(r, g, b, 1.0f);  // This functions is a state-setting func for "glClear()"
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // State-using function 
 
@@ -346,7 +391,8 @@ int main(){
         // TODO: Implement a way to unlock the xOffset by pressing the right click
         glBindVertexArray(VAO[0]);
         //cubeModel = glm::mat4(1.0f);
-        cubeModel = glm::translate(cubeModel, glm::vec3(cubePosX, -2.0f, cubePosZ));
+        //cubeModel = glm::translate(cubeModel, glm::vec3(cubePosX, -2.0f, cubePosZ));
+        cubeModel = glm::translate(cubeModel, cubePos);
         cubeModel = glm::rotate(cubeModel, glm::radians(cubeOrientation), glm::vec3(0.0f, 1.0f, 0.0f));
         cubeModel = glm::scale(cubeModel, glm::vec3(0.7f, 0.7f, 0.7f));
         //float angle = 20.0f * 1;
@@ -357,7 +403,7 @@ int main(){
         glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(cubeModel));
         glDrawArrays(GL_TRIANGLES, 0, 36);
       
-        camera.updateCameraPos(glm::vec3(cubePosX, 0, cubePosZ + 5));    
+        camera.updateCameraPos(glm::vec3(cubePos.x, 0, cubePos.z + 5));    
 
         floorShader.use();
         // SCENARIO FLOOR
