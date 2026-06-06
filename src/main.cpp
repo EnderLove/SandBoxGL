@@ -55,33 +55,25 @@ void cursorCallBack(GLFWwindow *window, double xPos, double yPos){
     xCursorPos = xPos;
     yCursorPos = yPos;
 
-    if (firstMouse){
-        lastX = xPos;
-        lastY = yPos;
-        firstMouse = false;
+    if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS){
+        if (firstMouse){
+            lastX = xCursorPos;
+            lastY = yCursorPos;
+            firstMouse = false;
+        }
+
+        xCursorOffset = xCursorPos - lastX;
+        yCursorOffset = lastY - yCursorPos;
+        cubeOrientation = -xCursorPos;
+
+        lastX = xCursorPos;
+        lastY = yCursorPos;
+
+        camera.ProcessMouseMovement(xCursorOffset, yCursorOffset);
     }
-
-    yCursorOffset = lastY - yPos;
-    xCursorOffset = xPos - lastX; 
-
-    // TODO: Implement a way to unlock the xOffset by pressing the right click
-   
-    lastX = xPos;
-    lastY = yPos;
-
-    camera.ProcessMouseMovement(xCursorOffset, yCursorOffset);
 };
 
-// TODO REDO THIS INTO A CURSOR CALLBACK
-void mouseButtonCallback(GLFWwindow *window, int button, int action, int mods){
-    
-    if (button == GLFW_MOUSE_BUTTON_RIGHT && action == GLFW_PRESS){
-    //if (glfwGetKey(window, GLFW_MOUSE_BUTTON_1) == GLFW_PRESS){
-        xCursorOffset = xCursorPos - lastX;
-        cubeOrientation = -xCursorPos;
-        printf("RIGHT CLICK!\n");
-    } 
-}
+// TODO MOUSE_CALLBACK_FUNCTION IMPLEMENT
 
 void scrollCallback(GLFWwindow *window, double xOffset, double yOffset){
     camera.ProcessMouseScroll(yOffset);
@@ -122,10 +114,11 @@ void processCameraInputController(){
 }
 
 void processPlayerInput(GLFWwindow *window){
-    if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) { cubePos.z -= 0.2; }
-    if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) { cubePos.z += 0.2; }
-    if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) { cubePos.x -= 0.2; }
-    if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) { cubePos.x += 0.2; }
+    float playerSpeed = 20.0f * deltaTime;
+    if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) { cubePos.z -= playerSpeed; }
+    if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) { cubePos.z += playerSpeed; }
+    if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) { cubePos.x -= playerSpeed; }
+    if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) { cubePos.x += playerSpeed; }
 }
 
 void processColorScreen(GLFWwindow *window){
@@ -174,7 +167,7 @@ int main(){
     glfwSetInputMode(window, GLFW_STICKY_MOUSE_BUTTONS, GLFW_TRUE);
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
     //glfwSetMouseButtonCallback(window, mouseButtonCallback);
-    //glfwSetCursorPosCallback(window, cursorCallBack);
+    glfwSetCursorPosCallback(window, cursorCallBack);
     glfwSetScrollCallback(window, scrollCallback);
     loadControllerGamePad();
 
@@ -306,32 +299,6 @@ int main(){
         
         if (CONTROLLER_CONNECTED) processCameraInputController();
         if (CONTROLLER_CONNECTED) camera.triggerAimViewFov(controllerAxes);
-
-        // TODO I NEED TO IMPLEMENT THIS USING THE CURSOR CALLBACK
-        if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS){
-            //double xPos = 0;
-            //double yPos = 0;
-            glfwGetCursorPos(window, &xCursorPos, &yCursorPos);
-
-            //xCursorPos = xPos;
-            //yCursorPos = yPos;
-
-            if (firstMouse){
-                lastX = xCursorPos;
-                lastY = yCursorPos;
-                firstMouse = false;
-            }
-
-            xCursorOffset = xCursorPos - lastX;
-            yCursorOffset = lastY - yCursorPos;
-            cubeOrientation = -xCursorPos;
-
-            lastX = xCursorPos;
-            lastY = yCursorPos;
-
-            camera.ProcessMouseMovement(xCursorOffset, yCursorOffset);
-            //printf("RIGHT CLICK!\n");
-        }
 
         glClearColor(r, g, b, 1.0f);  // This functions is a state-setting func for "glClear()"
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // State-using function 
