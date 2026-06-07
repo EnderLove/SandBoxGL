@@ -38,6 +38,7 @@ public:
     // euler Angles
     float Yaw;
     float Pitch;
+    float distance;
 
     // camera options
     float MovementSpeed;
