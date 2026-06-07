@@ -20,6 +20,16 @@ const int SCR_SOURCE_HEIGHT = 1080;
 const int SCR_WIDTH  = 16 * 80;
 const int SCR_HEIGHT =  9 * 90;
 
+float cubePosX = 0;
+float cubePosZ = 0;
+glm::vec3 cubePos = glm::vec3(0.0f, -2.3f, 0.0f);
+float cubeOrientation = 0;
+
+float xCursorOffset = 0;
+float yCursorOffset = 0;
+double xCursorPos = 0;
+double yCursorPos = 0;
+
 Camera camera(glm::vec3(0.0f, 0.0f, 3.0f)); // Initialization of the camera with a pos
 
 float lastX = (float)SCR_WIDTH  / 2;
@@ -42,19 +52,28 @@ void processInput(GLFWwindow *window){
 }
 
 void cursorCallBack(GLFWwindow *window, double xPos, double yPos){
-    if (firstMouse){
-        lastX = xPos;
-        lastY = yPos;
-        firstMouse = false;
-    }
+    xCursorPos = xPos;
+    yCursorPos = yPos;
 
-    float xOffset = xPos - lastX;
-    float yOffset = lastY - yPos;
-    lastX = xPos;
-    lastY = yPos;
-    
-    camera.ProcessMouseMovement(xOffset, yOffset);
+    if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS){
+        if (firstMouse){
+            lastX = xCursorPos;
+            lastY = yCursorPos;
+            firstMouse = false;
+        }
+
+        xCursorOffset = xCursorPos - lastX;
+        yCursorOffset = lastY - yCursorPos;
+        cubeOrientation = -xCursorPos;
+
+        lastX = xCursorPos;
+        lastY = yCursorPos;
+
+        camera.ProcessMouseMovement(xCursorOffset, yCursorOffset);
+    }
 };
+
+// TODO MOUSE_CALLBACK_FUNCTION IMPLEMENT
 
 void scrollCallback(GLFWwindow *window, double xOffset, double yOffset){
     camera.ProcessMouseScroll(yOffset);
@@ -92,6 +111,14 @@ void processCameraInputController(){
     lastY = -controllerAxes[4] * 10;
     
     camera.processController(controllerAxes, deltaTime, xOffset, yOffset);
+}
+
+void processPlayerInput(GLFWwindow *window){
+    float playerSpeed = 20.0f * deltaTime;
+    if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) { cubePos.z -= playerSpeed; }
+    if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) { cubePos.z += playerSpeed; }
+    if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) { cubePos.x -= playerSpeed; }
+    if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) { cubePos.x += playerSpeed; }
 }
 
 void processColorScreen(GLFWwindow *window){
@@ -137,7 +164,9 @@ int main(){
         printf("NUMBER OF AXES AVAILABLE: %d\n", axesCount);
     }
 
+    glfwSetInputMode(window, GLFW_STICKY_MOUSE_BUTTONS, GLFW_TRUE);
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+    //glfwSetMouseButtonCallback(window, mouseButtonCallback);
     glfwSetCursorPosCallback(window, cursorCallBack);
     glfwSetScrollCallback(window, scrollCallback);
     loadControllerGamePad();
@@ -259,12 +288,14 @@ int main(){
 
     glm::vec3 colorLight;
     float alphaBlendVal = 0;
-    
+
+
     while (!glfwWindowShouldClose(window)){
         processInput(window);
         processColorScreen(window);
         processCameraInput(window); 
         processAlphaBlend(window, &alphaBlendVal);
+        processPlayerInput(window);
         
         if (CONTROLLER_CONNECTED) processCameraInputController();
         if (CONTROLLER_CONNECTED) camera.triggerAimViewFov(controllerAxes);
@@ -302,17 +333,11 @@ int main(){
         materialShader.setVec3("light.position", lightPos);
         materialShader.setVec3("viewPos", camera.Position);
 
-        //colorLight.x = sin(glfwGetTime() * 2.0f);
-        //colorLight.y = sin(glfwGetTime() * 0.5f);
-        //colorLight.z = sin(glfwGetTime() * 4.0f);
-        //colorLight = glm::vec3(r, g, b); 
         colorLight = glm::vec3(1.0f);
-
 
         glm::vec3 diffuseColor = colorLight * glm::vec3(1.0f);
         glm::vec3 ambientColor = diffuseColor;
 
-        //materialShader.setVec3("light.ambient", ambientColor);
         materialShader.setVec3("light.diffuse", diffuseColor);
 
         // CUBES ROTATING
@@ -329,21 +354,24 @@ int main(){
         unsigned int projLoc     = glGetUniformLocation(materialShader.getShaderID(), "projection");
         glUniformMatrix4fv(viewLoc , 1, GL_FALSE, glm::value_ptr(globalView));
         glUniformMatrix4fv(projLoc , 1, GL_FALSE, glm::value_ptr(globalProjection));
-      
+     
+        // TODO: Implement a way to unlock the xOffset by pressing the right click
         glBindVertexArray(VAO[0]);
-        for (unsigned int i = 0; i < 10; i++){
-            cubeModel = glm::mat4(1.0f);
-            cubeModel = glm::translate(cubeModel, cubePosition[i]);
-            cubeModel = glm::scale(cubeModel, glm::vec3(0.7f, 0.7f, 0.7f));
-            float angle = 20.0f * i;
-            cubeModel = glm::rotate(cubeModel, glm::radians(angle + currentFrame * 15), glm::vec3(1.0f, 0.3f, 0.5f));
+        //cubeModel = glm::mat4(1.0f);
+        //cubeModel = glm::translate(cubeModel, glm::vec3(cubePosX, -2.0f, cubePosZ));
+        cubeModel = glm::translate(cubeModel, cubePos);
+        cubeModel = glm::rotate(cubeModel, glm::radians(cubeOrientation), glm::vec3(0.0f, 1.0f, 0.0f));
+        cubeModel = glm::scale(cubeModel, glm::vec3(0.7f, 0.7f, 0.7f));
+        //float angle = 20.0f * 1;
+        //cubeModel = glm::rotate(cubeModel, glm::radians(angle + currentFrame * 15), glm::vec3(1.0f, 0.3f, 0.5f));
 
-            glm::mat4 cubeModelInverse = glm::inverse(cubeModel); // NORMAL MATRIX
-            glUniformMatrix4fv(modelInvLoc, 1, GL_FALSE, glm::value_ptr(cubeModelInverse));
-            glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(cubeModel));
-            glDrawArrays(GL_TRIANGLES, 0, 36);
-        }
-       
+        glm::mat4 cubeModelInverse = glm::inverse(cubeModel); // NORMAL MATRIX
+        glUniformMatrix4fv(modelInvLoc, 1, GL_FALSE, glm::value_ptr(cubeModelInverse));
+        glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(cubeModel));
+        glDrawArrays(GL_TRIANGLES, 0, 36);
+      
+        camera.updateCameraPos(glm::vec3(cubePos.x, 0, cubePos.z + 5));    
+
         floorShader.use();
         // SCENARIO FLOOR
         floorShader.setVec3("lightPos", lightPos);

@@ -4,6 +4,7 @@ Camera::Camera(glm::vec3 position, glm::vec3 up, float yaw, float pitch) : Front
     WorldUp = up;
     Yaw = yaw;
     Pitch = pitch;
+    distance = position.z;
     updateCameraVectors();
 }
 
@@ -88,11 +89,15 @@ void Camera::ProcessMouseMovement(float xoffset, float yoffset, GLboolean constr
 
 // processes input received from a mouse scroll-wheel event. Only requires input on the vertical wheel-axis
 void Camera::ProcessMouseScroll(float yoffset){
-    Fov -= (float)yoffset;
-    if (Fov < 1.0f)
-        Fov = 1.0f;
-    if (Fov > 45.0f)
-        Fov = 45.0f;
+    distance -= (float)yoffset;
+    if (distance < 1.0f) distance = 1.0f;
+    if (distance > 15.0f) distance = 15.0f;
+
+//    Fov -= (float)yoffset;
+//    if (Fov < 1.0f)
+//        Fov = 1.0f;
+//    if (Fov > 45.0f)
+//        Fov = 45.0f;
 }
 
 // AIM MODE WITH CONTROLLER
@@ -114,4 +119,10 @@ void Camera::updateCameraVectors(){
     // re-calculate the Right and Up vector
     Right = glm::normalize(glm::cross(Front, WorldUp));  // normalize the vectors, because their length gets closer to 0 the more you look up or down which results in slower movement.
     Up    = glm::normalize(glm::cross(Right, Front));
+}
+
+void Camera::updateCameraPos(const glm::vec3 &pos){
+    Position.x = pos.x;
+    Position.y = pos.y;
+    Position.z = pos.z + distance;
 }

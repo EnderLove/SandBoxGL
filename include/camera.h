@@ -38,6 +38,7 @@ public:
     // euler Angles
     float Yaw;
     float Pitch;
+    float distance;
 
     // camera options
     float MovementSpeed;
@@ -65,6 +66,9 @@ public:
     
     void processController(const float *axes, float deltaTime, float xOffset, float yOffset);
     void triggerAimViewFov(const float *controllerAxes);
+
+    // Update camera position to a relative entity
+    void updateCameraPos(const glm::vec3 &pos);
 
 private:
     // calculates the front vector from the Camera's (updated) Euler Angles
