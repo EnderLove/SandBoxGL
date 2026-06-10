@@ -58,6 +58,7 @@ void processInput(GLFWwindow *window){
         glfwSetWindowShouldClose(window, true);
 }
 
+    
 void cursorCallBack(GLFWwindow *window, double xPos, double yPos){
     xCursorPos = xPos;
     yCursorPos = yPos;
@@ -77,25 +78,27 @@ void cursorCallBack(GLFWwindow *window, double xPos, double yPos){
         lastX = xCursorPos;
         lastY = yCursorPos;
 
+        // TODO :IMPLEMENT CAMERA MOVEMENT AROUND THE CUBE
         //camera.ProcessMouseMovement(xCursorOffset, yCursorOffset);
 
         printf("Cube Front = [%.2f, %.2f, %.2f]\n", cubeFront.x, cubeFront.y, cubeFront.z);
         printf("Cube Right = [%.2f, %.2f, %.2f]\n", cubeRight.x, cubeRight.y, cubeRight.z);
+
+        cubeYaw += xCursorOffset * 0.01f;
+        cubePitch += yCursorOffset * 0.01f; // The pitch is useless by now
+
+        cubeDir.x = cos(cubeYaw); 
+        cubeDir.z = sin(cubeYaw);
+
+        cubeFront = glm::normalize(cubeDir);
+        cubeRight = glm::normalize(glm::cross(cubeFront, cubeWorldUp));
+        cubeUp = glm::normalize(glm::cross(cubeRight, cubeFront));
+
+        cubeOrientation = -cubeYaw; // ANGLE OF RORATION FOR THE CUBE
     }
 
-    cubeYaw += xCursorOffset * 0.01f;
-    cubePitch += yCursorOffset * 0.01f;
-
-    cubeDir.x = cos(cubeYaw); //* cos(cubePitch);
-    //cubeDir.y = sin(yCursorOffset);
-    cubeDir.z = sin(cubeYaw); //* cos(cubePitch);
-
-    cubeFront = glm::normalize(cubeDir);
-    cubeRight = glm::normalize(glm::cross(cubeFront, cubeWorldUp));
-    cubeUp = glm::normalize(glm::cross(cubeRight, cubeFront));
-
-    cubeOrientation = xCursorOffset;
-
+    printf("CubeOrientation: %f || xCursorOffset: %f\n", cubeOrientation, xCursorOffset);
+    // TODO: SYNC CUBE ORIENTATION WITH YAW 
 };
 
 // TODO MOUSE_CALLBACK_FUNCTION IMPLEMENT
@@ -382,13 +385,9 @@ int main(){
      
         // TODO: Implement a way to unlock the xOffset by pressing the right click
         glBindVertexArray(VAO[0]);
-        //cubeModel = glm::mat4(1.0f);
-        //cubeModel = glm::translate(cubeModel, glm::vec3(cubePosX, -2.0f, cubePosZ));
         cubeModel = glm::translate(cubeModel, cubePos);
-        cubeModel = glm::rotate(cubeModel, glm::radians(cubeOrientation), glm::vec3(0.0f, 1.0f, 0.0f));
+        cubeModel = glm::rotate(cubeModel, cubeOrientation, glm::vec3(0.0f, 1.0f, 0.0f)); // REMOVED THE RADIANS TRANSFORMATION
         cubeModel = glm::scale(cubeModel, glm::vec3(0.7f, 0.7f, 0.7f));
-        //float angle = 20.0f * 1;
-        //cubeModel = glm::rotate(cubeModel, glm::radians(angle + currentFrame * 15), glm::vec3(1.0f, 0.3f, 0.5f));
 
         glm::mat4 cubeModelInverse = glm::inverse(cubeModel); // NORMAL MATRIX
         glUniformMatrix4fv(modelInvLoc, 1, GL_FALSE, glm::value_ptr(cubeModelInverse));
