@@ -93,11 +93,11 @@ void Camera::ProcessMouseScroll(float yoffset){
     if (distance < 1.0f) distance = 1.0f;
     if (distance > 15.0f) distance = 15.0f;
 
-//    Fov -= (float)yoffset;
-//    if (Fov < 1.0f)
-//        Fov = 1.0f;
-//    if (Fov > 45.0f)
-//        Fov = 45.0f;
+    //    Fov -= (float)yoffset;
+    //    if (Fov < 1.0f)
+    //        Fov = 1.0f;
+    //    if (Fov > 45.0f)
+    //        Fov = 45.0f;
 }
 
 // AIM MODE WITH CONTROLLER

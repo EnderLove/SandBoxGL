@@ -22,8 +22,15 @@ const int SCR_HEIGHT =  9 * 90;
 
 float cubePosX = 0;
 float cubePosZ = 0;
-glm::vec3 cubePos = glm::vec3(0.0f, -2.3f, 0.0f);
 float cubeOrientation = 0;
+
+glm::vec3 cubePos    (0.0f, -2.3f,  0.0f);
+glm::vec3 cubeWorldUp(0.0f,  1.0f,  0.0f);
+glm::vec3 cubeUp     (0.0f,  1.0f,  0.0f);
+glm::vec3 cubeFront  (0.0f,  0.0f, -1.0f);
+glm::vec3 cubeRight  (1.0f,  0.0f,  0.0f);
+float cubeYaw = 0;
+float cubePitch = 0;
 
 float xCursorOffset = 0;
 float yCursorOffset = 0;
@@ -54,6 +61,7 @@ void processInput(GLFWwindow *window){
 void cursorCallBack(GLFWwindow *window, double xPos, double yPos){
     xCursorPos = xPos;
     yCursorPos = yPos;
+    glm::vec3 cubeDir(0.0f, 0.0f, 0.0f);
 
     if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS){
         if (firstMouse){
@@ -64,13 +72,30 @@ void cursorCallBack(GLFWwindow *window, double xPos, double yPos){
 
         xCursorOffset = xCursorPos - lastX;
         yCursorOffset = lastY - yCursorPos;
-        cubeOrientation = -xCursorPos;
+        //cubeOrientation = -xCursorPos;
 
         lastX = xCursorPos;
         lastY = yCursorPos;
 
-        camera.ProcessMouseMovement(xCursorOffset, yCursorOffset);
+        //camera.ProcessMouseMovement(xCursorOffset, yCursorOffset);
+
+        printf("Cube Front = [%.2f, %.2f, %.2f]\n", cubeFront.x, cubeFront.y, cubeFront.z);
+        printf("Cube Right = [%.2f, %.2f, %.2f]\n", cubeRight.x, cubeRight.y, cubeRight.z);
     }
+
+    cubeYaw += xCursorOffset * 0.01f;
+    cubePitch += yCursorOffset * 0.01f;
+
+    cubeDir.x = cos(cubeYaw); //* cos(cubePitch);
+    //cubeDir.y = sin(yCursorOffset);
+    cubeDir.z = sin(cubeYaw); //* cos(cubePitch);
+
+    cubeFront = glm::normalize(cubeDir);
+    cubeRight = glm::normalize(glm::cross(cubeFront, cubeWorldUp));
+    cubeUp = glm::normalize(glm::cross(cubeRight, cubeFront));
+
+    cubeOrientation = xCursorOffset;
+
 };
 
 // TODO MOUSE_CALLBACK_FUNCTION IMPLEMENT
@@ -114,11 +139,11 @@ void processCameraInputController(){
 }
 
 void processPlayerInput(GLFWwindow *window){
-    float playerSpeed = 20.0f * deltaTime;
-    if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) { cubePos.z -= playerSpeed; }
-    if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) { cubePos.z += playerSpeed; }
-    if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) { cubePos.x -= playerSpeed; }
-    if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) { cubePos.x += playerSpeed; }
+    float playerSpeed = 14.0f * deltaTime;
+    if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) { cubePos += playerSpeed * cubeFront; }
+    if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) { cubePos -= playerSpeed * cubeFront; }
+    if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) { cubePos += glm::cross(cubeUp, cubeFront) * playerSpeed; }
+    if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) { cubePos -= glm::cross(cubeUp, cubeFront) * playerSpeed; }
 }
 
 void processColorScreen(GLFWwindow *window){
