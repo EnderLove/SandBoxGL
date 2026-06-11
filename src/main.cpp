@@ -41,7 +41,7 @@ Camera camera(glm::vec3(0.0f, 0.0f, 3.0f)); // Initialization of the camera with
 
 float lastX = (float)SCR_WIDTH  / 2;
 float lastY = (float)SCR_HEIGHT / 2;
-bool firstMouse = false;
+bool firstMouse = true;
 
 float deltaTime = 0.0f; // Diference of time between frames
 float lastFrame = 0.0f; // Time of the last frame
@@ -57,14 +57,14 @@ void processInput(GLFWwindow *window){
     if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
         glfwSetWindowShouldClose(window, true);
 }
-
     
 void cursorCallBack(GLFWwindow *window, double xPos, double yPos){
-    xCursorPos = xPos;
-    yCursorPos = yPos;
-    glm::vec3 cubeDir(0.0f, 0.0f, 0.0f);
-
     if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS){
+
+        xCursorPos = xPos;
+        yCursorPos = yPos;
+        glm::vec3 cubeDir(0.0f, 0.0f, 0.0f);
+
         if (firstMouse){
             lastX = xCursorPos;
             lastY = yCursorPos;
@@ -73,7 +73,6 @@ void cursorCallBack(GLFWwindow *window, double xPos, double yPos){
 
         xCursorOffset = xCursorPos - lastX;
         yCursorOffset = lastY - yCursorPos;
-        //cubeOrientation = -xCursorPos;
 
         lastX = xCursorPos;
         lastY = yCursorPos;
@@ -81,24 +80,18 @@ void cursorCallBack(GLFWwindow *window, double xPos, double yPos){
         // TODO :IMPLEMENT CAMERA MOVEMENT AROUND THE CUBE
         //camera.ProcessMouseMovement(xCursorOffset, yCursorOffset);
 
-        printf("Cube Front = [%.2f, %.2f, %.2f]\n", cubeFront.x, cubeFront.y, cubeFront.z);
-        printf("Cube Right = [%.2f, %.2f, %.2f]\n", cubeRight.x, cubeRight.y, cubeRight.z);
-
-        cubeYaw += xCursorOffset * 0.01f;
+        cubeYaw   += xCursorOffset * 0.01f;
         cubePitch += yCursorOffset * 0.01f; // The pitch is useless by now
 
-        cubeDir.x = cos(cubeYaw); 
-        cubeDir.z = sin(cubeYaw);
+        cubeDir.z = -cos(cubeYaw); 
+        cubeDir.x =  sin(cubeYaw);
 
         cubeFront = glm::normalize(cubeDir);
         cubeRight = glm::normalize(glm::cross(cubeFront, cubeWorldUp));
-        cubeUp = glm::normalize(glm::cross(cubeRight, cubeFront));
+        cubeUp    = glm::normalize(glm::cross(cubeRight, cubeFront));
 
         cubeOrientation = -cubeYaw; // ANGLE OF RORATION FOR THE CUBE
     }
-
-    printf("CubeOrientation: %f || xCursorOffset: %f\n", cubeOrientation, xCursorOffset);
-    // TODO: SYNC CUBE ORIENTATION WITH YAW 
 };
 
 // TODO MOUSE_CALLBACK_FUNCTION IMPLEMENT
