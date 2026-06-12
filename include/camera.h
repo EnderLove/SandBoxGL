@@ -69,6 +69,9 @@ public:
 
     // Update camera position to a relative entity
     void updateCameraPos(const glm::vec3 &pos);
+   
+    // Rotate the camera around a given model
+    void rotateAround(const glm::vec3 &cubePos, float yaw, float pitch);
 
 private:
     // calculates the front vector from the Camera's (updated) Euler Angles

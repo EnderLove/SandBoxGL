@@ -22,8 +22,16 @@ const int SCR_HEIGHT =  9 * 90;
 
 float cubePosX = 0;
 float cubePosZ = 0;
-glm::vec3 cubePos = glm::vec3(0.0f, -2.3f, 0.0f);
 float cubeOrientation = 0;
+
+glm::vec3 cubePos    (0.0f, 0.0f,  0.0f);
+//glm::vec3 cubePos    (0.0f, -2.3f,  0.0f);
+glm::vec3 cubeWorldUp(0.0f,  1.0f,  0.0f);
+glm::vec3 cubeUp     (0.0f,  1.0f,  0.0f);
+glm::vec3 cubeFront  (0.0f,  0.0f, -1.0f);
+glm::vec3 cubeRight  (1.0f,  0.0f,  0.0f);
+float cubeYaw = 0;
+float cubePitch = 0;
 
 float xCursorOffset = 0;
 float yCursorOffset = 0;
@@ -34,7 +42,7 @@ Camera camera(glm::vec3(0.0f, 0.0f, 3.0f)); // Initialization of the camera with
 
 float lastX = (float)SCR_WIDTH  / 2;
 float lastY = (float)SCR_HEIGHT / 2;
-bool firstMouse = false;
+bool firstMouse = true;
 
 float deltaTime = 0.0f; // Diference of time between frames
 float lastFrame = 0.0f; // Time of the last frame
@@ -50,12 +58,14 @@ void processInput(GLFWwindow *window){
     if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
         glfwSetWindowShouldClose(window, true);
 }
-
+    
 void cursorCallBack(GLFWwindow *window, double xPos, double yPos){
-    xCursorPos = xPos;
-    yCursorPos = yPos;
-
     if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS){
+
+        xCursorPos = xPos;
+        yCursorPos = yPos;
+        glm::vec3 cubeDir(0.0f, 0.0f, 0.0f);
+
         if (firstMouse){
             lastX = xCursorPos;
             lastY = yCursorPos;
@@ -64,12 +74,24 @@ void cursorCallBack(GLFWwindow *window, double xPos, double yPos){
 
         xCursorOffset = xCursorPos - lastX;
         yCursorOffset = lastY - yCursorPos;
-        cubeOrientation = -xCursorPos;
 
         lastX = xCursorPos;
         lastY = yCursorPos;
 
-        camera.ProcessMouseMovement(xCursorOffset, yCursorOffset);
+        // TODO :IMPLEMENT CAMERA MOVEMENT AROUND THE CUBE
+        //camera.ProcessMouseMovement(xCursorOffset, yCursorOffset);
+
+        cubeYaw   += xCursorOffset * 0.01f;
+        cubePitch += yCursorOffset * 0.01f; // The pitch is useless by now
+
+        cubeDir.z = -cos(cubeYaw); 
+        cubeDir.x =  sin(cubeYaw);
+
+        cubeFront = glm::normalize(cubeDir);
+        cubeRight = glm::normalize(glm::cross(cubeFront, cubeWorldUp));
+        cubeUp    = glm::normalize(glm::cross(cubeRight, cubeFront));
+
+        cubeOrientation = -cubeYaw; // ANGLE OF RORATION FOR THE CUBE
     }
 };
 
@@ -114,11 +136,11 @@ void processCameraInputController(){
 }
 
 void processPlayerInput(GLFWwindow *window){
-    float playerSpeed = 20.0f * deltaTime;
-    if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) { cubePos.z -= playerSpeed; }
-    if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) { cubePos.z += playerSpeed; }
-    if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) { cubePos.x -= playerSpeed; }
-    if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) { cubePos.x += playerSpeed; }
+    float playerSpeed = 14.0f * deltaTime;
+    if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) { cubePos += playerSpeed * cubeFront; }
+    if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) { cubePos -= playerSpeed * cubeFront; }
+    if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) { cubePos -= playerSpeed * cubeRight; }
+    if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) { cubePos += playerSpeed * cubeRight; }
 }
 
 void processColorScreen(GLFWwindow *window){
@@ -293,7 +315,7 @@ int main(){
     while (!glfwWindowShouldClose(window)){
         processInput(window);
         processColorScreen(window);
-        processCameraInput(window); 
+        //processCameraInput(window); 
         processAlphaBlend(window, &alphaBlendVal);
         processPlayerInput(window);
         
@@ -357,20 +379,17 @@ int main(){
      
         // TODO: Implement a way to unlock the xOffset by pressing the right click
         glBindVertexArray(VAO[0]);
-        //cubeModel = glm::mat4(1.0f);
-        //cubeModel = glm::translate(cubeModel, glm::vec3(cubePosX, -2.0f, cubePosZ));
         cubeModel = glm::translate(cubeModel, cubePos);
-        cubeModel = glm::rotate(cubeModel, glm::radians(cubeOrientation), glm::vec3(0.0f, 1.0f, 0.0f));
+        cubeModel = glm::rotate(cubeModel, cubeOrientation, glm::vec3(0.0f, 1.0f, 0.0f)); // REMOVED THE RADIANS TRANSFORMATION
         cubeModel = glm::scale(cubeModel, glm::vec3(0.7f, 0.7f, 0.7f));
-        //float angle = 20.0f * 1;
-        //cubeModel = glm::rotate(cubeModel, glm::radians(angle + currentFrame * 15), glm::vec3(1.0f, 0.3f, 0.5f));
 
         glm::mat4 cubeModelInverse = glm::inverse(cubeModel); // NORMAL MATRIX
         glUniformMatrix4fv(modelInvLoc, 1, GL_FALSE, glm::value_ptr(cubeModelInverse));
         glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(cubeModel));
         glDrawArrays(GL_TRIANGLES, 0, 36);
       
-        camera.updateCameraPos(glm::vec3(cubePos.x, 0, cubePos.z + 5));    
+        //camera.updateCameraPos(glm::vec3(cubePos.x, 0, cubePos.z + 5));    
+        camera.rotateAround(cubePos, cubeYaw, cubePitch);
 
         floorShader.use();
         // SCENARIO FLOOR
