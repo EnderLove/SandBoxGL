@@ -24,7 +24,8 @@ float cubePosX = 0;
 float cubePosZ = 0;
 float cubeOrientation = 0;
 
-glm::vec3 cubePos    (0.0f, -2.3f,  0.0f);
+glm::vec3 cubePos    (0.0f, 0.0f,  0.0f);
+//glm::vec3 cubePos    (0.0f, -2.3f,  0.0f);
 glm::vec3 cubeWorldUp(0.0f,  1.0f,  0.0f);
 glm::vec3 cubeUp     (0.0f,  1.0f,  0.0f);
 glm::vec3 cubeFront  (0.0f,  0.0f, -1.0f);
@@ -138,8 +139,8 @@ void processPlayerInput(GLFWwindow *window){
     float playerSpeed = 14.0f * deltaTime;
     if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) { cubePos += playerSpeed * cubeFront; }
     if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) { cubePos -= playerSpeed * cubeFront; }
-    if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) { cubePos += glm::cross(cubeUp, cubeFront) * playerSpeed; }
-    if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) { cubePos -= glm::cross(cubeUp, cubeFront) * playerSpeed; }
+    if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) { cubePos -= playerSpeed * cubeRight; }
+    if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) { cubePos += playerSpeed * cubeRight; }
 }
 
 void processColorScreen(GLFWwindow *window){
@@ -314,7 +315,7 @@ int main(){
     while (!glfwWindowShouldClose(window)){
         processInput(window);
         processColorScreen(window);
-        processCameraInput(window); 
+        //processCameraInput(window); 
         processAlphaBlend(window, &alphaBlendVal);
         processPlayerInput(window);
         
@@ -387,7 +388,8 @@ int main(){
         glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(cubeModel));
         glDrawArrays(GL_TRIANGLES, 0, 36);
       
-        camera.updateCameraPos(glm::vec3(cubePos.x, 0, cubePos.z + 5));    
+        //camera.updateCameraPos(glm::vec3(cubePos.x, 0, cubePos.z + 5));    
+        camera.rotateAround(cubePos, cubeYaw, cubePitch);
 
         floorShader.use();
         // SCENARIO FLOOR
