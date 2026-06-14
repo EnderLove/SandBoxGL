@@ -45,6 +45,9 @@ public:
     float MouseSensitivity;
     float Fov;
 
+    // This angle enables to rotate the camera around the player at any position in the Y axis
+    float angleAroundPlayer = 0;
+
     // constructor with vectors
     Camera(glm::vec3 position = glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f), float yaw = YAW, float pitch = PITCH);
 
@@ -74,6 +77,7 @@ public:
     void rotateAround(const glm::vec3 &cubePos, float yaw, float pitch);
 
 private:
+public:
     // calculates the front vector from the Camera's (updated) Euler Angles
     void updateCameraVectors();
 };

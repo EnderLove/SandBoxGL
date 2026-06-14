@@ -5,6 +5,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
+#include <glm/trigonometric.hpp>
 #include <stdio.h>
 #include <math.h>
 
@@ -58,7 +59,7 @@ void processInput(GLFWwindow *window){
     if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
         glfwSetWindowShouldClose(window, true);
 }
-    
+ 
 void cursorCallBack(GLFWwindow *window, double xPos, double yPos){
     if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS){
 
@@ -92,8 +93,68 @@ void cursorCallBack(GLFWwindow *window, double xPos, double yPos){
         cubeUp    = glm::normalize(glm::cross(cubeRight, cubeFront));
 
         cubeOrientation = -cubeYaw; // ANGLE OF RORATION FOR THE CUBE
+
+        //camera.Pitch -= yCursorOffset * 0.01f;
+        //camera.angleAroundPlayer -= xCursorOffset * 0.01f;
+
+        camera.Pitch -= yCursorOffset;
+        camera.angleAroundPlayer -= xCursorOffset;
+
+        // TODO Investigate the use of radians with cos and sin
+        float horizontalCameraDistanceFromCube = camera.distance * cos(glm::radians(camera.Pitch));
+        float verticalCameraDistanceFromCube   = camera.distance * sin(glm::radians(camera.Pitch));
+
+        float theta = cubeYaw + camera.angleAroundPlayer;
+        float camXoffset = horizontalCameraDistanceFromCube * sin(glm::radians(theta));
+        float camZoffset = horizontalCameraDistanceFromCube * cos(glm::radians(theta));
+        
+        camera.Position.x = cubePos.x - camXoffset;
+        camera.Position.y = cubePos.y + verticalCameraDistanceFromCube;
+        camera.Position.z = cubePos.z - camZoffset;
+
+        camera.Yaw = 180 - (cubeYaw + camera.angleAroundPlayer);
+
+        camera.updateCameraVectors();
+        //camera.rotateAround(cubePos, cubeYaw, cubePitch);
     }
 };
+
+//void cursorCallBack(GLFWwindow *window, double xPos, double yPos){
+//    if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS){
+//
+//        xCursorPos = xPos;
+//        yCursorPos = yPos;
+//        glm::vec3 cubeDir(0.0f, 0.0f, 0.0f);
+//
+//        if (firstMouse){
+//            lastX = xCursorPos;
+//            lastY = yCursorPos;
+//            firstMouse = false;
+//        }
+//
+//        xCursorOffset = xCursorPos - lastX;
+//        yCursorOffset = lastY - yCursorPos;
+//
+//        lastX = xCursorPos;
+//        lastY = yCursorPos;
+//
+//        // TODO :IMPLEMENT CAMERA MOVEMENT AROUND THE CUBE
+//        //camera.ProcessMouseMovement(xCursorOffset, yCursorOffset);
+//
+//        cubeYaw   += xCursorOffset * 0.01f;
+//        cubePitch += yCursorOffset * 0.01f; // The pitch is useless by now
+//
+//        cubeDir.z = -cos(cubeYaw); 
+//        cubeDir.x =  sin(cubeYaw);
+//
+//        cubeFront = glm::normalize(cubeDir);
+//        cubeRight = glm::normalize(glm::cross(cubeFront, cubeWorldUp));
+//        cubeUp    = glm::normalize(glm::cross(cubeRight, cubeFront));
+//
+//        cubeOrientation = -cubeYaw; // ANGLE OF RORATION FOR THE CUBE
+//        //camera.rotateAround(cubePos, cubeYaw, cubePitch);
+//    }
+//};
 
 // TODO MOUSE_CALLBACK_FUNCTION IMPLEMENT
 
@@ -388,8 +449,12 @@ int main(){
         glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(cubeModel));
         glDrawArrays(GL_TRIANGLES, 0, 36);
       
-        //camera.updateCameraPos(glm::vec3(cubePos.x, 0, cubePos.z + 5));    
-        camera.rotateAround(cubePos, cubeYaw, cubePitch);
+        //camera.updateCameraPos(glm::vec3(0.0f, 0.0f, cubePos.z));    
+        //if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS){
+        //    camera.rotateAround(cubePos, cubeYaw, cubePitch);
+        //}else {
+        //    camera.rotateAround(cubePos, 0, 0);
+        //}
 
         floorShader.use();
         // SCENARIO FLOOR

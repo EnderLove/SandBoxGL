@@ -72,9 +72,11 @@ void Camera::ProcessMouseScroll(float yoffset){
 void Camera::updateCameraVectors(){
     // calculate the new Front vector
     glm::vec3 front;
+
     front.x = cos(glm::radians(Yaw)) * cos(glm::radians(Pitch));
     front.y = sin(glm::radians(Pitch));
     front.z = sin(glm::radians(Yaw)) * cos(glm::radians(Pitch));
+   
     Front = glm::normalize(front);
     // re-calculate the Right and Up vector
     Right = glm::normalize(glm::cross(Front, WorldUp));  // normalize the vectors, because their length gets closer to 0 the more you look up or down which results in slower movement.
@@ -82,8 +84,9 @@ void Camera::updateCameraVectors(){
 }
 
 void Camera::updateCameraPos(const glm::vec3 &pos){
-    Position.x = pos.x;
-    Position.y = pos.y;
+    //Position = pos + distance;
+    //Position.x = pos.x;
+    //Position.y = pos.y;
     Position.z = pos.z + distance;
 }
 
@@ -92,15 +95,29 @@ void Camera::rotateAround(const glm::vec3 &cubePos, float yaw, float pitch){
     glm::vec3 yRot = Position; 
     glm::vec3 xRot(0.0f, 0.0f, 0.0f);
 
-    yRot.x = ((Position.x - cubePos.x) *  cos(yaw)) - ((Position.z - cubePos.z) * sin(yaw));
-    yRot.y = ( Position.y - cubePos.y);
-    yRot.z = ((Position.x - cubePos.x) * -sin(yaw)) - ((Position.z - cubePos.z) * cos(yaw));
+    yRot.x = cubePos.x + ((Position.x - cubePos.x) * cos(yaw)) + ((Position.z - cubePos.z) * sin(yaw));
+    yRot.y = Position.y;
+    yRot.z = cubePos.z + ((Position.x - cubePos.x) * -sin(yaw)) + ((Position.z - cubePos.z) * cos(yaw));
 
     xRot.x = yRot.x;
-    xRot.y = (yRot.y * cos(pitch)) + (yRot.z * sin(pitch));
-    xRot.z = (yRot.y * sin(pitch)) - (yRot.z * cos(pitch));
+    xRot.y = cubePos.y + ((yRot.x - cubePos.x) * cos(pitch)) + ((yRot.z - cubePos.z) * -sin(pitch));
+    xRot.z = cubePos.z + ((yRot.x - cubePos.x) * sin(pitch)) + ((yRot.z - cubePos.z) *  cos(pitch));
+
+    //xRot.x = yRot.x;
+    //xRot.y = (yRot.y * cos(pitch)) + (yRot.z * -sin(pitch));
+    //xRot.z = (yRot.y * sin(pitch)) + (yRot.z * cos(pitch));
 
     Position = xRot;
+
+    // TODO  REDO FRONT CALC
+    //glm::vec3 front;
+    //front.x = cos(yaw) * cos(pitch);
+    //front.y = sin(pitch);
+    //front.z = sin(yaw) * cos(pitch);
+    //Front = glm::normalize(cubePos);
+    //// re-calculate the Right and Up vector
+    //Right = glm::normalize(glm::cross(Front, WorldUp));  // normalize the vectors, because their length gets closer to 0 the more you look up or down which results in slower movement.
+    //Up    = glm::normalize(glm::cross(Right, Front));
 }
 
 // =============================== CONTROLLER METHODS ========================================
