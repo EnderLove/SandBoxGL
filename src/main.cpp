@@ -62,16 +62,15 @@ void processInput(GLFWwindow *window){
  
 void cursorCallBack(GLFWwindow *window, double xPos, double yPos){
     if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS){
-
-        xCursorPos = xPos;
-        yCursorPos = yPos;
-        glm::vec3 cubeDir(0.0f, 0.0f, 0.0f);
-
         if (firstMouse){
             lastX = xCursorPos;
             lastY = yCursorPos;
             firstMouse = false;
         }
+
+        xCursorPos = xPos;
+        yCursorPos = yPos;
+        glm::vec3 cubeDir(0.0f, 0.0f, 0.0f);
 
         xCursorOffset = xCursorPos - lastX;
         yCursorOffset = lastY - yCursorPos;
@@ -79,14 +78,11 @@ void cursorCallBack(GLFWwindow *window, double xPos, double yPos){
         lastX = xCursorPos;
         lastY = yCursorPos;
 
-        // TODO :IMPLEMENT CAMERA MOVEMENT AROUND THE CUBE
-        //camera.ProcessMouseMovement(xCursorOffset, yCursorOffset);
-
         cubeYaw   += xCursorOffset * 0.01f;
         cubePitch += yCursorOffset * 0.01f; // The pitch is useless by now
 
-        cubeDir.z = -cos(cubeYaw); 
-        cubeDir.x =  sin(cubeYaw);
+        cubeDir.z = -cos(glm::radians(cubeYaw));
+        cubeDir.x =  sin(glm::radians(cubeYaw));
 
         cubeFront = glm::normalize(cubeDir);
         cubeRight = glm::normalize(glm::cross(cubeFront, cubeWorldUp));
@@ -94,28 +90,35 @@ void cursorCallBack(GLFWwindow *window, double xPos, double yPos){
 
         cubeOrientation = -cubeYaw; // ANGLE OF RORATION FOR THE CUBE
 
-        //camera.Pitch -= yCursorOffset * 0.01f;
-        //camera.angleAroundPlayer -= xCursorOffset * 0.01f;
+        camera.Pitch -= yCursorOffset * 0.01f;
+        //camera.angleAroundPlayer += xCursorOffset * 0.01f;
 
-        camera.Pitch -= yCursorOffset;
-        camera.angleAroundPlayer -= xCursorOffset;
+        if (camera.Pitch >  89.0f) camera.Pitch =  89.0f;
+        if (camera.Pitch < -89.0f) camera.Pitch = -89.0f;
 
-        // TODO Investigate the use of radians with cos and sin
         float horizontalCameraDistanceFromCube = camera.distance * cos(glm::radians(camera.Pitch));
         float verticalCameraDistanceFromCube   = camera.distance * sin(glm::radians(camera.Pitch));
 
-        float theta = cubeYaw + camera.angleAroundPlayer;
+        float theta = -cubeYaw + 180.0f;
+        //float theta = cubeYaw + camera.angleAroundPlayer;
         float camXoffset = horizontalCameraDistanceFromCube * sin(glm::radians(theta));
         float camZoffset = horizontalCameraDistanceFromCube * cos(glm::radians(theta));
+        
+        //camera.Yaw = 180 - (cubeYaw + camera.angleAroundPlayer);
+        camera.Yaw = theta;
         
         camera.Position.x = cubePos.x - camXoffset;
         camera.Position.y = cubePos.y + verticalCameraDistanceFromCube;
         camera.Position.z = cubePos.z - camZoffset;
 
-        camera.Yaw = 180 - (cubeYaw + camera.angleAroundPlayer);
 
         camera.updateCameraVectors();
-        //camera.rotateAround(cubePos, cubeYaw, cubePitch);
+
+        printf("CAMERA_POS: %.2f, %.2f, %.2f\n", camera.Position.x, camera.Position.y, camera.Position.z);
+        printf("ANGLE_AROUND_P: %f || CUBE YAW: %f\n", camera.angleAroundPlayer, cubeYaw);
+        printf("CAM YAW: %f || CAM PITCH: %f\n", camera.Yaw, camera.Pitch);
+    } else {
+        firstMouse = true;
     }
 };
 
@@ -441,7 +444,7 @@ int main(){
         // TODO: Implement a way to unlock the xOffset by pressing the right click
         glBindVertexArray(VAO[0]);
         cubeModel = glm::translate(cubeModel, cubePos);
-        cubeModel = glm::rotate(cubeModel, cubeOrientation, glm::vec3(0.0f, 1.0f, 0.0f)); // REMOVED THE RADIANS TRANSFORMATION
+        cubeModel = glm::rotate(cubeModel, glm::radians(cubeOrientation), glm::vec3(0.0f, 1.0f, 0.0f)); // REMOVED THE RADIANS TRANSFORMATION
         cubeModel = glm::scale(cubeModel, glm::vec3(0.7f, 0.7f, 0.7f));
 
         glm::mat4 cubeModelInverse = glm::inverse(cubeModel); // NORMAL MATRIX
