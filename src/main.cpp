@@ -90,74 +90,11 @@ void cursorCallBack(GLFWwindow *window, double xPos, double yPos){
 
         cubeOrientation = -cubeYaw; // ANGLE OF RORATION FOR THE CUBE
 
-        camera.Pitch -= yCursorOffset * 0.01f;
-        //camera.angleAroundPlayer += xCursorOffset * 0.01f;
-
-        if (camera.Pitch >  89.0f) camera.Pitch =  89.0f;
-        if (camera.Pitch < -89.0f) camera.Pitch = -89.0f;
-
-        float horizontalCameraDistanceFromCube = camera.distance * cos(glm::radians(camera.Pitch));
-        float verticalCameraDistanceFromCube   = camera.distance * sin(glm::radians(camera.Pitch));
-
-        float theta = -cubeYaw + 180.0f;
-        //float theta = cubeYaw + camera.angleAroundPlayer;
-        float camXoffset = horizontalCameraDistanceFromCube * sin(glm::radians(theta));
-        float camZoffset = horizontalCameraDistanceFromCube * cos(glm::radians(theta));
-        
-        //camera.Yaw = 180 - (cubeYaw + camera.angleAroundPlayer);
-        camera.Yaw = theta;
-        
-        camera.Position.x = cubePos.x - camXoffset;
-        camera.Position.y = cubePos.y + verticalCameraDistanceFromCube;
-        camera.Position.z = cubePos.z - camZoffset;
-
-
-        camera.updateCameraVectors();
-
-        printf("CAMERA_POS: %.2f, %.2f, %.2f\n", camera.Position.x, camera.Position.y, camera.Position.z);
-        printf("ANGLE_AROUND_P: %f || CUBE YAW: %f\n", camera.angleAroundPlayer, cubeYaw);
-        printf("CAM YAW: %f || CAM PITCH: %f\n", camera.Yaw, camera.Pitch);
+        camera.orbitationAroundEntity(cubePos, cubeYaw, xCursorOffset, yCursorOffset);
     } else {
         firstMouse = true;
     }
 };
-
-//void cursorCallBack(GLFWwindow *window, double xPos, double yPos){
-//    if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS){
-//
-//        xCursorPos = xPos;
-//        yCursorPos = yPos;
-//        glm::vec3 cubeDir(0.0f, 0.0f, 0.0f);
-//
-//        if (firstMouse){
-//            lastX = xCursorPos;
-//            lastY = yCursorPos;
-//            firstMouse = false;
-//        }
-//
-//        xCursorOffset = xCursorPos - lastX;
-//        yCursorOffset = lastY - yCursorPos;
-//
-//        lastX = xCursorPos;
-//        lastY = yCursorPos;
-//
-//        // TODO :IMPLEMENT CAMERA MOVEMENT AROUND THE CUBE
-//        //camera.ProcessMouseMovement(xCursorOffset, yCursorOffset);
-//
-//        cubeYaw   += xCursorOffset * 0.01f;
-//        cubePitch += yCursorOffset * 0.01f; // The pitch is useless by now
-//
-//        cubeDir.z = -cos(cubeYaw); 
-//        cubeDir.x =  sin(cubeYaw);
-//
-//        cubeFront = glm::normalize(cubeDir);
-//        cubeRight = glm::normalize(glm::cross(cubeFront, cubeWorldUp));
-//        cubeUp    = glm::normalize(glm::cross(cubeRight, cubeFront));
-//
-//        cubeOrientation = -cubeYaw; // ANGLE OF RORATION FOR THE CUBE
-//        //camera.rotateAround(cubePos, cubeYaw, cubePitch);
-//    }
-//};
 
 // TODO MOUSE_CALLBACK_FUNCTION IMPLEMENT
 
@@ -178,13 +115,6 @@ void loadControllerGamePad(){
         CONTROLLER_CONNECTED = true;
         printf("CONTROLLER_CONNECTED==================\n");
     }
-}
-
-void processCameraInput(GLFWwindow *window){
-    if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) { camera.ProcessKeyboard(FORWARD , deltaTime); }
-    if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) { camera.ProcessKeyboard(BACKWARD, deltaTime); }
-    if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) { camera.ProcessKeyboard(LEFT    , deltaTime); }
-    if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) { camera.ProcessKeyboard(RIGHT   , deltaTime); }
 }
 
 void processCameraInputController(){
@@ -391,7 +321,9 @@ int main(){
 
         float currentFrame = glfwGetTime();
         deltaTime = currentFrame - lastFrame;
-        
+
+        camera.updateCameraPos(cubePos);
+
         // TEXTURE BINDING 
         textures.woodBoxContainer.bindTexture(1);
         textures.pixelRedEye.bindTexture(0);
